@@ -1,0 +1,146 @@
+# CivicdlPaymentWebhook
+
+# Django Payment Webhook Receiver
+
+This Django application provides a **Webhook Receiver** for payment events (e.g., Razorpay or PayPal).  
+It supports **single or batch payloads**, validates a **simulated HMAC signature**, and stores payment events in a PostgreSQL database with **idempotency** checks.
+
+---
+
+## Table of Contents
+
+- [Features](#features)  
+- [Requirements](#requirements)  
+- [Installation](#installation)  
+- [Configuration](#configuration)  
+- [Database Model](#database-model)  
+- [Webhook Endpoint](#webhook-endpoint)  
+- [Usage](#usage)  
+- [Testing with cURL](#testing-with-curl)  
+- [Example Payloads](#example-payloads)  
+- [License](#license)
+
+---
+
+## Features
+
+- Accepts JSON webhook payloads in Razorpay or PayPal format.  
+- Validates **simulated HMAC SHA256 signature** using a predefined secret (`test_secret`).  
+- Rejects requests with:
+  - Missing or incorrect signature (403 Forbidden)  
+  - Invalid JSON (400 Bad Request)  
+- Parses and stores:
+  - `event_type`  
+  - `event_id`  
+  - `payment_id`  
+  - `amount` and `currency`  
+- Supports **idempotency**: prevents duplicate processing of the same `event_id`.  
+- Handles **single object** or **list payloads**.  
+
+---
+
+## Requirements
+
+- Python 3.11+  
+- Django 4+  
+- Django REST Framework  
+- PostgreSQL (or any Django-supported database)  
+
+---
+
+## Installation
+
+1. Clone the repository:
+
+```bash
+git clone https://github.com/farooq1993/payment-webhook.git
+cd payment-webhook
+
+
+2. Create a virtual environment
+python -m venv env
+source env/bin/activate  # Linux/macOS
+env\Scripts\activate     # Windows
+
+3. Install dependencies
+pip install -r requirements.txt
+
+4. Apply migrations:
+python manage.py makemigrations
+python manage.py migrate
+
+5. Create .env file in root directory
+  DATABASE_NAME="civicpayment"
+  DATABASE_USER="postgres"
+  DATABASE_PASSWORD="123456"
+  DATABASE_HOST="localhost"
+  DATABASE_PORT="5432" 
+  SHARED_SECRET="test_secret"
+
+
+6. Testing curl
+
+curl --location 'http://127.0.0.1:8000/webhook/payments' \
+--header 'Content-Type: application/json' \
+--header 'X-Razorpay-Signature: TEST_SIGNATURE' \
+--data-binary '@/path/to/mock_payloads/payment_captured.json'
+
+Response:
+[
+  {
+    "event_id": "evt_cap_004",
+    "status": "ok"
+  }
+]
+
+Invalid signature:
+
+{
+  "error": "Invalid signature"
+}
+
+Duplicate event:
+
+[
+  {
+    "event_id": "evt_cap_004",
+    "status": "duplicate"
+  }
+]
+Missing event_id/payment_id:
+
+[
+  {
+    "event_id": null,
+    "status": "failed",
+    "reason": "Missing event_id or payment_id"
+  }
+]
+
+ GET endpoint to fetch events:
+
+curl --location 'http://127.0.0.1:8000/payments/pay_013/events' \
+--header 'Cookie: csrftoken=uwxt7XuwpypNLKdcyAMZCCIbNMOV18jK'
+
+[
+    {
+        "id": 71,
+        "event_id": "evt_auth_013",
+        "event_type": "payment.authorized",
+        "payment_id": "pay_013",
+        "amount": "2000.00",
+        "currency": "INR",
+        "received_at": "2025-09-24T05:31:20.232280Z"
+    },
+    {
+        "id": 87,
+        "event_id": "evt_cap_013",
+        "event_type": "payment.captured",
+        "payment_id": "pay_013",
+        "amount": "2000.00",
+        "currency": "INR",
+        "received_at": "2025-09-24T05:31:33.056898Z"
+    }
+]
+
+
