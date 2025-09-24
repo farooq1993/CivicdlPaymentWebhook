@@ -76,3 +76,48 @@ python manage.py migrate
   DATABASE_HOST="localhost"
   DATABASE_PORT="5432" 
   SHARED_SECRET="test_secret"
+
+
+6. Testing curl
+
+curl --location 'http://127.0.0.1:8000/webhook/payments' \
+--header 'Content-Type: application/json' \
+--header 'X-Razorpay-Signature: TEST_SIGNATURE' \
+--data-binary '@/path/to/mock_payloads/payment_captured.json'
+
+Response:
+[
+  {
+    "event_id": "evt_cap_004",
+    "status": "ok"
+  }
+]
+
+Invalid signature:
+
+{
+  "error": "Invalid signature"
+}
+
+Duplicate event:
+
+[
+  {
+    "event_id": "evt_cap_004",
+    "status": "duplicate"
+  }
+]
+Missing event_id/payment_id:
+
+[
+  {
+    "event_id": null,
+    "status": "failed",
+    "reason": "Missing event_id or payment_id"
+  }
+]
+
+curl --location 'http://127.0.0.1:8000/payments/pay_013/events' \
+--header 'Cookie: csrftoken=uwxt7XuwpypNLKdcyAMZCCIbNMOV18jK'
+
+
