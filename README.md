@@ -117,7 +117,30 @@ Missing event_id/payment_id:
   }
 ]
 
+ GET endpoint to fetch events:
+
 curl --location 'http://127.0.0.1:8000/payments/pay_013/events' \
 --header 'Cookie: csrftoken=uwxt7XuwpypNLKdcyAMZCCIbNMOV18jK'
+
+[
+    {
+        "id": 71,
+        "event_id": "evt_auth_013",
+        "event_type": "payment.authorized",
+        "payment_id": "pay_013",
+        "amount": "2000.00",
+        "currency": "INR",
+        "received_at": "2025-09-24T05:31:20.232280Z"
+    },
+    {
+        "id": 87,
+        "event_id": "evt_cap_013",
+        "event_type": "payment.captured",
+        "payment_id": "pay_013",
+        "amount": "2000.00",
+        "currency": "INR",
+        "received_at": "2025-09-24T05:31:33.056898Z"
+    }
+]
 
 
